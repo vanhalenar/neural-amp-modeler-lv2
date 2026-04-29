@@ -72,6 +72,7 @@ namespace NAM {
 
 		NeuralAudio::NeuralModel* currentModel = nullptr;
 		std::string currentModelPath;
+		std::string pendingModelPath;
 		float prevDCInput = 0;
 		float prevDCOutput = 0;
 

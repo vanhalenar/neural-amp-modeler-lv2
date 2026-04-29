@@ -217,6 +217,13 @@ namespace NAM {
 
 	void Plugin::process(uint32_t n_samples) noexcept
 	{
+		if (!pendingModelPath.empty())
+    		{
+        		LV2LoadModelMsg msg = { kWorkTypeLoad, {} };
+        		memcpy(msg.path, pendingModelPath.c_str(), pendingModelPath.size());
+        		if (schedule->schedule_work(schedule->handle, sizeof(msg), &msg) == LV2_WORKER_SUCCESS)
+            		pendingModelPath.clear();
+    		}
 		lv2_atom_forge_set_buffer(&atom_forge, (uint8_t*)ports.notify, ports.notify->atom.size);
 		lv2_atom_forge_sequence_head(&atom_forge, &sequence_frame, uris.units_frame);
 
@@ -451,7 +458,8 @@ namespace NAM {
 		uint32_t    valflags = 0;
 		const void* value = retrieve(handle, nam->uris.model_Path, &size, &type, &valflags);
 
-		lv2_log_trace(&nam->logger, "Restoring model '%s'\n", (const char*)value);
+		// lv2_log_trace(&nam->logger, "Restoring model '%s'\n", (const char*)value);
+		lv2_log_trace(&nam->logger, "Restoring model '%s' type=%u atom_Path=%u\n",(const char*)value, type, nam->uris.atom_Path);
 
 		NAM::LV2LoadModelMsg msg = { NAM::kWorkTypeLoad, {} };
 
@@ -506,8 +514,9 @@ namespace NAM {
 		if (result == LV2_STATE_SUCCESS)
 		{
 			// Schedule model to be loaded by the provided worker
-			nam->schedule->schedule_work(nam->schedule->handle, sizeof(msg), &msg);
-
+			// LV2_Worker_Status wst = nam->schedule->schedule_work(nam->schedule->handle, sizeof(msg), &msg);
+			// lv2_log_trace(&nam->logger, "schedule_work returned %d, path='%s'\n", wst, msg.path);
+			nam->pendingModelPath = msg.path;
 			nam->currentModelPath = msg.path;
 		}
 
